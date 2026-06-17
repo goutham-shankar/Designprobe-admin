@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
-  Search, RefreshCw, MoreVertical, Pencil, Trash2, RotateCcw,
-  Globe, Loader2, ChevronLeft, ChevronRight, Copy, Check, Hash,
+  Search, RefreshCw, MoreVertical, Trash2, Plus,
+  Globe, Loader2, ChevronLeft, ChevronRight, Copy, Check, Hash, ExternalLink,
 } from "lucide-react";
 
 interface Run {
@@ -116,6 +116,10 @@ export default function RunsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Run | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [scrapeOpen, setScrapeOpen] = useState(false);
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scraping, setScraping] = useState(false);
+
   const fetchRuns = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -150,6 +154,24 @@ export default function RunsPage() {
     }
   };
 
+  const handleNewScrape = async () => {
+    if (!scrapeUrl.trim()) return;
+    setScraping(true);
+    try {
+      await apiFetch("/api/admin/scrape", {
+        method: "POST", adminToken: token,
+        body: JSON.stringify({ url: scrapeUrl.trim() }),
+      });
+      setScrapeOpen(false);
+      setScrapeUrl("");
+      fetchRuns();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setScraping(false);
+    }
+  };
+
   if (!token) return <p className="text-zinc-500 mt-16 text-center text-sm">Enter admin token on the dashboard first.</p>;
 
   return (
@@ -160,9 +182,14 @@ export default function RunsPage() {
           <h1 className="text-xl font-semibold text-white">Designs</h1>
           <p className="text-xs text-zinc-500 mt-0.5">{total} runs</p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchRuns}>
-          <RefreshCw className="h-3.5 w-3.5" /> Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchRuns}>
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+          <Button size="sm" onClick={() => setScrapeOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> New Scrape
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -244,7 +271,7 @@ export default function RunsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/runs/${encodeURIComponent(slug)}`); }}>
-                              <Pencil className="text-zinc-400" /> Open
+                              <ExternalLink className="text-zinc-400" /> Open
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(slug); }}>
                               <Hash className="text-zinc-400" /> Copy Slug
@@ -280,6 +307,30 @@ export default function RunsPage() {
           </Button>
         </div>
       )}
+
+      {/* New Scrape Dialog */}
+      <Dialog open={scrapeOpen} onOpenChange={setScrapeOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Scrape</DialogTitle>
+            <DialogDescription>Enter a URL to scrape and generate a design system.</DialogDescription>
+          </DialogHeader>
+          <div>
+            <Input
+              placeholder="https://example.com"
+              value={scrapeUrl}
+              onChange={(e) => setScrapeUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleNewScrape()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScrapeOpen(false)}>Cancel</Button>
+            <Button onClick={handleNewScrape} disabled={scraping || !scrapeUrl.trim()}>
+              {scraping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Scrape
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
