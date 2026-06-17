@@ -51,20 +51,21 @@ export default function CategoriesPage() {
   const handleCreate = async () => {
     const name = createName.trim();
     if (!name) return;
-    // "Creating" a category means it appears once assigned; here we just close
-    // and the name becomes available in dropdowns. If it already exists, no-op.
     if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
       alert("Category already exists.");
       return;
     }
     setCreating(true);
     try {
-      // Create by assigning to a placeholder — simplest approach is to add it
-      // to local state so it shows up in run assignment dropdowns immediately.
-      // A real run assignment will persist it in DB.
-      setCategories((prev) => [{ name, count: 0 }, ...prev]);
+      const res = await apiFetch<{ ok: boolean; data: Category }>("/api/admin/categories", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      });
+      setCategories((prev) => [res.data, ...prev]);
       setCreateOpen(false);
       setCreateName("");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
     } finally {
       setCreating(false);
     }
