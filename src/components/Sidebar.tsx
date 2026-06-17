@@ -11,11 +11,13 @@ import {
   Users,
   Settings,
   LogOut,
+  Tag,
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/runs", label: "Designs", icon: Layers },
+  { href: "/categories", label: "Categories", icon: Tag },
   { href: "/queue", label: "Queue", icon: ListOrdered },
   { href: "/users", label: "Users", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },

@@ -15,7 +15,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Search, RefreshCw, MoreVertical, Trash2, Plus,
-  Globe, Loader2, ChevronLeft, ChevronRight, Copy, Check, Hash, ExternalLink,
+  Globe, Loader2, ChevronLeft, ChevronRight, Copy, Check, Hash, ExternalLink, Tag,
 } from "lucide-react";
 
 interface Run {
@@ -30,6 +30,7 @@ interface Run {
   r2?: { slug?: string | null } | null;
   title?: string | null;
   description?: string | null;
+  category?: string | null;
   createdAt?: string;
 }
 
@@ -77,6 +78,7 @@ function TableSkeleton() {
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider w-[30%]">Site</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Slug</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Category</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</th>
               <th className="px-4 py-2.5 w-10"></th>
@@ -88,6 +90,7 @@ function TableSkeleton() {
                 <td className="px-4 py-3"><div className="flex items-center gap-2"><Skeleton className="h-5 w-5 rounded-sm" /><Skeleton className="h-4 w-44" /></div></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-4" /></td>
@@ -121,6 +124,9 @@ export default function RunsPage() {
   const [scrapeUrl, setScrapeUrl] = useState("");
   const [scraping, setScraping] = useState(false);
 
+  const [categories, setCategories] = useState<string[]>([]);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+
   const fetchRuns = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -140,6 +146,28 @@ export default function RunsPage() {
   }, [user, page, status, search]);
 
   useEffect(() => { fetchRuns(); }, [fetchRuns]);
+
+  useEffect(() => {
+    if (!user) return;
+    apiFetch<{ ok: boolean; data: { name: string }[] }>("/api/admin/categories")
+      .then((r) => setCategories(r.data.map((c) => c.name)))
+      .catch(() => {});
+  }, [user]);
+
+  const assignCategory = async (runId: string, category: string) => {
+    setAssigningId(runId);
+    try {
+      await apiFetch(`/api/admin/runs/${runId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ category }),
+      });
+      setRuns((prev) => prev.map((r) => r.runId === runId ? { ...r, category } : r));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAssigningId(null);
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -229,6 +257,7 @@ export default function RunsPage() {
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider w-[30%]">Site</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Slug</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Category</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider w-10"></th>
@@ -261,6 +290,21 @@ export default function RunsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3"><StatusBadge status={run.status} /></td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        {assigningId === run.runId ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-zinc-500" />
+                        ) : (
+                          <select
+                            value={run.category ?? "Other"}
+                            onChange={(e) => assignCategory(run.runId, e.target.value)}
+                            className="h-6 px-1.5 text-[11px] bg-zinc-900 border border-zinc-700 rounded text-zinc-300 outline-none focus:ring-1 focus:ring-zinc-600 max-w-[120px] truncate"
+                          >
+                            {Array.from(new Set(["Other", run.category ?? "Other", ...categories])).map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-xs text-zinc-500 font-mono">{formatDuration(run.durationMs)}</td>
                       <td className="px-4 py-3 text-xs text-zinc-500">{timeAgo(run.createdAt)}</td>
                       <td className="px-4 py-3">
@@ -288,7 +332,7 @@ export default function RunsPage() {
                   );
                 })}
                 {runs.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-12 text-center text-zinc-600 text-sm">No runs found.</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-12 text-center text-zinc-600 text-sm">No runs found.</td></tr>
                 )}
               </tbody>
             </table>
