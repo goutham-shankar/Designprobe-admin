@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState, useCallback } from "react";
-import { useToken } from "@/lib/useToken";
+import { useAuth } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ const STATE_CONFIG = [
 ];
 
 export default function QueuePage() {
-  const { token } = useToken();
+  const { user } = useAuth();
   const [stats, setStats] = useState<QueueStats | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [jobState, setJobState] = useState("active");
@@ -56,25 +56,25 @@ export default function QueuePage() {
   const [deleting, setDeleting] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     try {
       const [s, j] = await Promise.all([
-        apiFetch<{ ok: boolean; counts: QueueStats }>("/api/admin/queues/stats", { adminToken: token }),
-        apiFetch<{ ok: boolean; jobs: Job[] }>(`/api/admin/queues/jobs?state=${jobState}&limit=50`, { adminToken: token }),
+        apiFetch<{ ok: boolean; counts: QueueStats }>("/api/admin/queues/stats"),
+        apiFetch<{ ok: boolean; jobs: Job[] }>(`/api/admin/queues/jobs?state=${jobState}&limit=50`),
       ]);
       setStats(s.counts);
       setJobs(j.jobs);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
-  }, [token, jobState]);
+  }, [user, jobState]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
   const retryJob = async (id: string) => {
     try {
-      await apiFetch(`/api/admin/jobs/${id}/retry`, { method: "POST", adminToken: token });
+      await apiFetch(`/api/admin/jobs/${id}/retry`, { method: "POST" });
       refresh();
     } catch (e) {
       alert(e instanceof Error ? e.message : String(e));
@@ -85,7 +85,7 @@ export default function QueuePage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin/jobs/${deleteTarget.id}`, { method: "DELETE", adminToken: token });
+      await apiFetch(`/api/admin/jobs/${deleteTarget.id}`, { method: "DELETE" });
       setDeleteTarget(null);
       refresh();
     } catch (e) {
@@ -95,7 +95,7 @@ export default function QueuePage() {
     }
   };
 
-  if (!token) return <p className="text-zinc-500 mt-16 text-center text-sm">Enter admin token on the dashboard first.</p>;
+  if (!user) return <p className="text-zinc-500 mt-16 text-center text-sm">Sign in to view the queue.</p>;
 
   return (
     <div className="space-y-4 max-w-7xl">

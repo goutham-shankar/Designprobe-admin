@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { AuthProvider } from "@/lib/auth";
+import { AppShell } from "@/components/AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,16 +30,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex bg-black text-zinc-100">
-        <Sidebar />
-        <div className="flex-1 ml-[220px] flex flex-col min-h-screen">
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
-          <footer className="px-6 py-4 border-t border-zinc-800/60 text-center">
-            <p className="text-[11px] text-zinc-600">
-              Design Probe v2.1
-              
-            </p>
-          </footer>
-        </div>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   );

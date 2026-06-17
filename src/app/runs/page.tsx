@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useToken } from "@/lib/useToken";
+import { useAuth } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { cn, formatDuration, timeAgo, urlToSlug, getDomain } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,8 @@ function TableSkeleton() {
 
 export default function RunsPage() {
   const router = useRouter();
-  const { token } = useToken();
+  const { user } = useAuth();
+  const token = user?.uid ?? ""; // kept only for the !token guard below
   const [runs, setRuns] = useState<Run[]>([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -121,7 +122,7 @@ export default function RunsPage() {
   const [scraping, setScraping] = useState(false);
 
   const fetchRuns = useCallback(async () => {
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
@@ -136,7 +137,7 @@ export default function RunsPage() {
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
-  }, [token, page, status, search]);
+  }, [user, page, status, search]);
 
   useEffect(() => { fetchRuns(); }, [fetchRuns]);
 
@@ -172,7 +173,7 @@ export default function RunsPage() {
     }
   };
 
-  if (!token) return <p className="text-zinc-500 mt-16 text-center text-sm">Enter admin token on the dashboard first.</p>;
+  if (!user) return <p className="text-zinc-500 mt-16 text-center text-sm">Sign in to view designs.</p>;
 
   return (
     <div className="space-y-4 max-w-7xl">

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { useToken } from "@/lib/useToken";
+import { useAuth } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 import { r2Url, getR2Base, setR2Base } from "@/lib/r2";
 import { cn, formatDuration, timeAgo, getDomain } from "@/lib/utils";
@@ -139,7 +139,8 @@ function PageSkeleton() {
 export default function DesignDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  const { token } = useToken();
+  const { user } = useAuth();
+  const token = user?.uid ?? "";
   const [run, setRun] = useState<Run | null>(null);
   const [scraped, setScraped] = useState<ScrapedDoc | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,22 +158,22 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
   const [rerunning, setRerunning] = useState(false);
 
   useEffect(() => {
-    if (!token || getR2Base()) return;
-    apiFetch<{ ok: boolean; data: { r2PublicBase?: string | null } }>("/api/admin/stats", { adminToken: token })
+    if (!user || getR2Base()) return;
+    apiFetch<{ ok: boolean; data: { r2PublicBase?: string | null } }>("/api/admin/stats")
       .then((r) => { if (r.data.r2PublicBase) setR2Base(r.data.r2PublicBase); })
       .catch(() => {});
-  }, [token]);
+  }, [user]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!user) return;
     setLoading(true);
     apiFetch<{ ok: boolean; data: Run; scraped: ScrapedDoc | null }>(
-      `/api/admin/runs/by-slug/${encodeURIComponent(slug)}`, { adminToken: token },
+      `/api/admin/runs/by-slug/${encodeURIComponent(slug)}`,
     )
       .then((res) => { setRun(res.data); setScraped(res.scraped); })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [token, slug]);
+  }, [user, slug]);
 
   const handleEdit = async () => {
     if (!run) return;
@@ -209,7 +210,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
     finally { setRerunning(false); }
   };
 
-  if (!token) return <p className="text-zinc-500 mt-16 text-center text-sm">Enter admin token on the dashboard first.</p>;
+  if (!user) return <p className="text-zinc-500 mt-16 text-center text-sm">Sign in to view designs.</p>;
   if (loading) return <PageSkeleton />;
   if (error) return (
     <div className="max-w-md mx-auto mt-16 rounded-lg border border-red-900/50 bg-red-950/20 p-6">
@@ -290,7 +291,6 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
         <TabsContent value="preview">
           <PreviewTab
             slug={slug}
-            token={token}
             screenshotUrl={screenshotUrl}
             previewUrl={previewUrl}
             designMdUrl={designMdUrl}
@@ -392,13 +392,11 @@ function useDebounce<T>(value: T, ms: number): T {
 
 function PreviewTab({
   slug,
-  token,
   screenshotUrl,
   previewUrl,
   designMdUrl,
 }: {
   slug: string;
-  token: string;
   screenshotUrl?: string | null;
   previewUrl?: string | null;
   designMdUrl?: string | null;
@@ -416,18 +414,18 @@ function PreviewTab({
     setHtmlLoading(true);
     setHtmlError("");
     apiFetch<{ ok: boolean; html: string }>(
-      `/api/admin/runs/by-slug/${encodeURIComponent(slug)}/html`, { adminToken: token },
+      `/api/admin/runs/by-slug/${encodeURIComponent(slug)}/html`,
     )
       .then((res) => { setHtml(res.html); })
       .catch((e) => setHtmlError(e instanceof Error ? e.message : String(e)))
       .finally(() => setHtmlLoading(false));
-  }, [slug, token]);
+  }, [slug]);
 
   const saveHtml = async () => {
     setHtmlSaving(true);
     try {
       await apiFetch(`/api/admin/runs/by-slug/${encodeURIComponent(slug)}/html`, {
-        method: "PUT", adminToken: token,
+        method: "PUT",
         body: JSON.stringify({ html }),
       });
       setHtmlDirty(false);

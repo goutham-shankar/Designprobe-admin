@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   Layers,
   ListOrdered,
   Users,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 const NAV = [
@@ -31,6 +33,7 @@ export { ProbeIcon };
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, loading, signOut } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[220px] bg-zinc-950 border-r border-zinc-800/60 flex flex-col z-50">
@@ -43,6 +46,7 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+
       <nav className="flex-1 py-3 px-2">
         {NAV.map((item) => {
           const active =
@@ -65,8 +69,32 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-5 py-3 border-t border-zinc-800/60">
-        <p className="text-[10px] text-zinc-600">Design Probe v2.1</p>
+
+      {/* User info + logout */}
+      <div className="px-3 py-3 border-t border-zinc-800/60 space-y-2">
+        {!loading && user && (
+          <div className="flex items-center gap-2.5 px-2">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className="h-7 w-7 rounded-full shrink-0" />
+            ) : (
+              <div className="h-7 w-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 text-xs text-zinc-400">
+                {user.displayName?.[0] ?? "?"}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-zinc-300 truncate font-medium">{user.displayName}</p>
+              <p className="text-[10px] text-zinc-600 truncate">{user.email}</p>
+            </div>
+            <button
+              onClick={() => signOut()}
+              title="Sign out"
+              className="text-zinc-600 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <p className="text-[10px] text-zinc-700 px-2">Design Probe v2.1</p>
       </div>
     </aside>
   );
