@@ -58,6 +58,17 @@ interface Run {
   description?: string | null;
   designTokens?: Record<string, unknown> | null;
   storageVersion?: string | null;
+  pipelineVersion?: string | null;
+  workerVersion?: string | null;
+  userIds?: string[];
+  summary?: {
+    primaryColors?: string[];
+    typographyFamilies?: string[];
+    sectionCount?: number;
+    componentCount?: number;
+    confidenceScore?: number;
+    scannedElements?: number;
+  } | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -620,6 +631,49 @@ function DataTab({ run, scraped }: { run: Run; scraped: ScrapedDoc | null }) {
                   <p className="text-sm text-zinc-300 line-clamp-3">{value}</p>
                 </div>
               ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Summary Metrics */}
+      {run.summary && (run.summary.confidenceScore || run.summary.scannedElements || run.summary.sectionCount) ? (
+        <Section title="Quality Metrics">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label: "Confidence", value: run.summary.confidenceScore != null ? `${Math.round(run.summary.confidenceScore * 100)}%` : null },
+              { label: "Scanned", value: run.summary.scannedElements?.toLocaleString() ?? null },
+              { label: "Sections", value: run.summary.sectionCount?.toLocaleString() ?? null },
+              { label: "Components", value: run.summary.componentCount?.toLocaleString() ?? null },
+            ].filter(m => m.value).map((m) => (
+              <div key={m.label} className="rounded-lg border border-zinc-800/60 bg-black/50 p-3 text-center">
+                <p className="text-lg font-bold text-zinc-100">{m.value}</p>
+                <p className="text-[10px] text-zinc-600 uppercase tracking-wider mt-0.5">{m.label}</p>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {/* Pipeline Info */}
+      {(run.pipelineVersion || run.workerVersion || run.storageVersion || (run.userIds && run.userIds.length > 0)) && (
+        <Section title="Pipeline">
+          <div className="rounded-lg border border-zinc-800/60 bg-black/50 p-4 space-y-2">
+            {[
+              { label: "Pipeline Version", value: run.pipelineVersion },
+              { label: "Worker Version", value: run.workerVersion },
+              { label: "Storage Version", value: run.storageVersion },
+            ].filter(r => r.value).map(({ label, value }) => (
+              <div key={label} className="flex justify-between text-sm">
+                <span className="text-zinc-500">{label}</span>
+                <span className="text-zinc-300 font-mono text-xs">{value}</span>
+              </div>
+            ))}
+            {run.userIds && run.userIds.length > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-zinc-500">Initiated by</span>
+                <span className="text-zinc-300 font-mono text-xs">{run.userIds.length} user{run.userIds.length !== 1 ? "s" : ""}</span>
+              </div>
+            )}
           </div>
         </Section>
       )}

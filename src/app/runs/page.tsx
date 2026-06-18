@@ -31,6 +31,7 @@ interface Run {
   title?: string | null;
   description?: string | null;
   category?: string | null;
+  costEstimate?: { totalUsd?: number } | null;
   createdAt?: string;
 }
 
@@ -79,6 +80,7 @@ function TableSkeleton() {
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Slug</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Category</th>
+              <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Cost</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</th>
               <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</th>
               <th className="px-4 py-2.5 w-10"></th>
@@ -91,6 +93,7 @@ function TableSkeleton() {
                 <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
                 <td className="px-4 py-3"><Skeleton className="h-4 w-4" /></td>
@@ -258,6 +261,7 @@ export default function RunsPage() {
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Slug</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Status</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Category</th>
+                  <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Cost</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Duration</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider">Created</th>
                   <th className="px-4 py-2.5 text-xs font-medium text-zinc-500 uppercase tracking-wider w-10"></th>
@@ -305,6 +309,11 @@ export default function RunsPage() {
                           </select>
                         )}
                       </td>
+                      <td className="px-4 py-3 text-xs font-mono">
+                        {run.costEstimate?.totalUsd != null
+                          ? <span className="text-emerald-500">${run.costEstimate.totalUsd.toFixed(4)}</span>
+                          : <span className="text-zinc-700">—</span>}
+                      </td>
                       <td className="px-4 py-3 text-xs text-zinc-500 font-mono">{formatDuration(run.durationMs)}</td>
                       <td className="px-4 py-3 text-xs text-zinc-500">{timeAgo(run.createdAt)}</td>
                       <td className="px-4 py-3">
@@ -332,7 +341,7 @@ export default function RunsPage() {
                   );
                 })}
                 {runs.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-12 text-center text-zinc-600 text-sm">No runs found.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-zinc-600 text-sm">No runs found.</td></tr>
                 )}
               </tbody>
             </table>
