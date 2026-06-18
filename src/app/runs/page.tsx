@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { cn, timeAgo, urlToSlug, getDomain } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StatusBadge, Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
