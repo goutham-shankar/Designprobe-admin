@@ -11,6 +11,8 @@ export function getR2Base(): string | null {
 }
 
 export function r2Url(key: string | null | undefined): string | null {
-  if (!key || !_r2Base) return null;
+  if (!key) return null;
+  if (key.startsWith("https://") || key.startsWith("http://")) return key;
+  if (!_r2Base) return null;
   return `${_r2Base}/${key.replace(/^\/+/, "")}`;
 }

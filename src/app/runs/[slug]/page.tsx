@@ -60,6 +60,7 @@ interface Run {
   storageVersion?: string | null;
   pipelineVersion?: string | null;
   workerVersion?: string | null;
+  source?: "library" | "volt" | "scrape" | null;
   userIds?: string[];
   summary?: {
     primaryColors?: string[];
@@ -261,6 +262,18 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
                 <CopyButton text={slug} />
               </div>
               <StatusBadge status={run.status} />
+              {run.source && run.source !== "scrape" && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px]",
+                    run.source === "library" && "border-violet-500/30 bg-violet-500/10 text-violet-400",
+                    run.source === "volt"    && "border-amber-500/30 bg-amber-500/10 text-amber-400",
+                  )}
+                >
+                  {run.source}
+                </Badge>
+              )}
               {run.provider && (
                 <Badge variant="outline" className="text-[10px]">
                   <Cpu className="h-3 w-3 mr-1" /> {run.provider}/{run.model ?? "?"}
