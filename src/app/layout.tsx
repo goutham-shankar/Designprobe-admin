@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Design Probe Admin",
   description: "Admin panel for Design Probe",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
