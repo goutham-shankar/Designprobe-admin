@@ -11,11 +11,9 @@ async function getBearerToken(): Promise<string> {
 
 export async function apiFetch<T = unknown>(
   path: string,
-  options?: RequestInit & { adminToken?: string },
+  options?: RequestInit,
 ): Promise<T> {
-  // adminToken param kept for backward compat but ignored — always use Firebase token
-  const { adminToken: _ignored, ...fetchOpts } = options ?? {};
-
+  const fetchOpts = options ?? {};
   const token = await getBearerToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

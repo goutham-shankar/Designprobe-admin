@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useToken } from "@/lib/useToken";
 import { apiFetch } from "@/lib/api";
 import { cn, formatBytes } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ interface CollectionInfo {
 }
 
 export default function CollectionsPage() {
-  const { token } = useToken();
   const [collections, setCollections] = useState<CollectionInfo[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [docs, setDocs] = useState<Record<string, unknown>[]>([]);
@@ -31,22 +29,21 @@ export default function CollectionsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const fetchCollections = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const res = await apiFetch<{ ok: boolean; data: CollectionInfo[] }>("/api/admin/collections", { adminToken: token });
+      const res = await apiFetch<{ ok: boolean; data: CollectionInfo[] }>("/api/admin/collections");
       setCollections(res.data);
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const fetchDocs = useCallback(async () => {
-    if (!token || !selected) return;
+    if (!selected) return;
     setDocsLoading(true);
     try {
       const res = await apiFetch<{ ok: boolean; data: Record<string, unknown>[]; total: number; pages: number }>(
-        `/api/admin/collections/${selected}?page=${page}&limit=20`, { adminToken: token },
+        `/api/admin/collections/${selected}?page=${page}&limit=20`,
       );
       setDocs(res.data);
       setPages(res.pages);
@@ -54,12 +51,10 @@ export default function CollectionsPage() {
     } catch { /* ignore */ } finally {
       setDocsLoading(false);
     }
-  }, [token, selected, page]);
+  }, [selected, page]);
 
   useEffect(() => { fetchCollections(); }, [fetchCollections]);
   useEffect(() => { fetchDocs(); }, [fetchDocs]);
-
-  if (!token) return <p className="text-zinc-500 mt-16 text-center text-sm">Enter admin token on the dashboard first.</p>;
 
   return (
     <div className="space-y-4 max-w-7xl">

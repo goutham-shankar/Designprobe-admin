@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
@@ -15,9 +15,10 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Search, RefreshCw, MoreVertical, Trash2, Plus,
-  Globe, Loader2, ChevronLeft, ChevronRight, Hash, ExternalLink,
+  Loader2, ChevronLeft, ChevronRight, Hash, ExternalLink,
   Star, X,
 } from "lucide-react";
+import { SiteFavicon } from "@/components/SiteFavicon";
 
 interface Run {
   _id: string;
@@ -36,21 +37,6 @@ interface Run {
   source?: "library" | "volt" | "scrape" | null;
   featured?: boolean;
   createdAt?: string;
-}
-
-/* ── Favicon ── */
-
-function SiteFavicon({ url, size = 20 }: { url: string; size?: number }) {
-  const [errored, setErrored] = useState(false);
-  const domain = getDomain(url);
-  if (errored) return <Globe className="h-4 w-4 text-zinc-600 shrink-0" />;
-  return (
-    <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${size * 2}`}
-      width={size} height={size} alt="" className="rounded-sm shrink-0"
-      onError={() => setErrored(true)}
-    />
-  );
 }
 
 /* ── Source Badge ── */
@@ -115,13 +101,13 @@ function TableSkeleton() {
 export default function RunsPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const token = user?.uid ?? ""; // kept only for the !token guard below
   const [runs, setRuns] = useState<Run[]>([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [status, setStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [deleteTarget, setDeleteTarget] = useState<Run | null>(null);
@@ -137,23 +123,35 @@ export default function RunsPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
 
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
+
+  const [error, setError] = useState("");
+
   const fetchRuns = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    setError("");
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (status !== "all") params.set("status", status);
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       const res = await apiFetch<{ ok: boolean; data: Run[]; total: number; pages: number }>(
-        `/api/admin/runs?${params}`, { adminToken: token },
+        `/api/admin/runs?${params}`,
       );
       setRuns(res.data);
       setPages(res.pages);
       setTotal(res.total);
-    } catch { /* ignore */ } finally {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
       setLoading(false);
     }
-  }, [user, page, status, search]);
+  }, [user, page, status, debouncedSearch]);
 
   useEffect(() => { fetchRuns(); }, [fetchRuns]);
 
@@ -183,7 +181,7 @@ export default function RunsPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin/runs/${deleteTarget.runId}`, { method: "DELETE", adminToken: token });
+      await apiFetch(`/api/admin/runs/${deleteTarget.runId}`, { method: "DELETE" });
       setDeleteTarget(null);
       fetchRuns();
     } catch (e) {
@@ -198,7 +196,7 @@ export default function RunsPage() {
     setScraping(true);
     try {
       await apiFetch("/api/admin/scrape", {
-        method: "POST", adminToken: token,
+        method: "POST",
         body: JSON.stringify({ url: scrapeUrl.trim() }),
       });
       setScrapeOpen(false);
@@ -315,6 +313,14 @@ export default function RunsPage() {
             <X className="h-3.5 w-3.5" /> Clear
           </Button>
           {bulkLoading && <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />}
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-red-900/50 bg-red-950/20 px-4 py-3 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchRuns}>Retry</Button>
         </div>
       )}
 

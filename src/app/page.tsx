@@ -13,7 +13,6 @@ import {
   Activity,
   CheckCircle2,
   XCircle,
-  Globe,
   HardDrive,
   ArrowRight,
   Clock,
@@ -23,19 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-function SiteFavicon({ url, size = 16 }: { url: string; size?: number }) {
-  const [errored, setErrored] = useState(false);
-  const domain = getDomain(url);
-  if (errored) return <Globe className="h-4 w-4 text-zinc-600 shrink-0" />;
-  return (
-    <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${size * 2}`}
-      width={size} height={size} alt="" className="rounded-sm shrink-0"
-      onError={() => setErrored(true)}
-    />
-  );
-}
+import { SiteFavicon } from "@/components/SiteFavicon";
 
 interface DashboardData {
   runs: { total: number; byStatus: Record<string, number> };

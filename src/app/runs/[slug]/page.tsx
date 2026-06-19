@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import {
   ExternalLink, Image as ImageIcon, FileCode2, FileText, Braces, Palette,
-  Eye, Clock, Cpu, Loader2, Save, Copy, Check, Globe, Hash, Code,
+  Eye, Clock, Cpu, Loader2, Save, Copy, Check, Hash, Code,
   ArrowLeft, Pencil, RotateCcw, Trash2,
 } from "lucide-react";
+import { SiteFavicon } from "@/components/SiteFavicon";
 
 /* ── Types ── */
 
@@ -98,19 +99,6 @@ interface ScrapedDoc {
 
 /* ── Helpers ── */
 
-function SiteFavicon({ url, size = 20 }: { url: string; size?: number }) {
-  const [errored, setErrored] = useState(false);
-  const domain = getDomain(url);
-  if (errored) return <Globe className="text-zinc-600 shrink-0" style={{ width: size, height: size }} />;
-  return (
-    <img
-      src={`https://www.google.com/s2/favicons?domain=${domain}&sz=${size * 2}`}
-      width={size} height={size} alt="" className="rounded-sm shrink-0"
-      onError={() => setErrored(true)}
-    />
-  );
-}
-
 function CopyButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = (e: React.MouseEvent) => {
@@ -152,7 +140,6 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
   const { slug } = use(params);
   const router = useRouter();
   const { user } = useAuth();
-  const token = user?.uid ?? "";
   const [run, setRun] = useState<Run | null>(null);
   const [scraped, setScraped] = useState<ScrapedDoc | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,7 +179,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
     setEditSaving(true);
     try {
       await apiFetch(`/api/admin/runs/${run.runId}`, {
-        method: "PATCH", adminToken: token,
+        method: "PATCH",
         body: JSON.stringify({ title: editTitle, description: editDesc }),
       });
       setEditOpen(false);
@@ -205,7 +192,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
     if (!run) return;
     setDeleting(true);
     try {
-      await apiFetch(`/api/admin/runs/${run.runId}`, { method: "DELETE", adminToken: token });
+      await apiFetch(`/api/admin/runs/${run.runId}`, { method: "DELETE" });
       router.push("/runs");
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setDeleting(false); }
@@ -215,7 +202,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ slug: s
     if (!run) return;
     setRerunning(true);
     try {
-      await apiFetch(`/api/admin/runs/${run.runId}/rerun`, { method: "POST", adminToken: token });
+      await apiFetch(`/api/admin/runs/${run.runId}/rerun`, { method: "POST" });
       setRerunOpen(false);
       router.push("/runs");
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
@@ -523,7 +510,7 @@ function PreviewTab({
           </div>
           <div className="rounded-lg border border-zinc-800/60 overflow-hidden bg-white h-full">
             {debouncedHtml ? (
-              <iframe srcDoc={debouncedHtml} title="Live Preview" className="w-full h-full border-0" sandbox="allow-same-origin allow-scripts" />
+              <iframe srcDoc={debouncedHtml} title="Live Preview" className="w-full h-full border-0" sandbox="allow-scripts" />
             ) : (
               <div className="flex items-center justify-center h-full text-zinc-400 text-sm">No HTML to preview</div>
             )}

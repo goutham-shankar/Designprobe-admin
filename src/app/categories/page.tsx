@@ -18,6 +18,7 @@ export default function CategoriesPage() {
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -36,11 +37,12 @@ export default function CategoriesPage() {
   const fetchCategories = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    setError("");
     try {
       const res = await apiFetch<{ ok: boolean; data: Category[] }>("/api/admin/categories");
       setCategories(res.data);
-    } catch {
-      // ignore
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
@@ -128,6 +130,14 @@ export default function CategoriesPage() {
           </Button>
         </div>
       </div>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg border border-red-900/50 bg-red-950/20 px-4 py-3 flex items-center justify-between">
+          <p className="text-red-400 text-sm">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchCategories}>Retry</Button>
+        </div>
+      )}
 
       {/* List */}
       {loading ? (

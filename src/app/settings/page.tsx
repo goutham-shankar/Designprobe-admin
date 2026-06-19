@@ -1,15 +1,9 @@
 "use client";
 
-import { useToken } from "@/lib/useToken";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Server, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogOut, Save, Server, Key, Info } from "lucide-react";
 
 export default function SettingsPage() {
-  const { token, save, clear } = useToken();
-  const [draft, setDraft] = useState("");
-  const [showToken, setShowToken] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
   return (
@@ -33,46 +27,9 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div>
-          <label className="text-xs text-zinc-500 mb-1.5 block flex items-center gap-1.5">
-            <Key className="h-3 w-3" /> Admin Token
-          </label>
-          {token ? (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 relative">
-                <Input
-                  type={showToken ? "text" : "password"}
-                  value={token}
-                  readOnly
-                  className="font-mono text-xs pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 cursor-pointer"
-                >
-                  {showToken ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
-              </div>
-              <Button variant="destructive" size="sm" onClick={clear}>
-                <LogOut className="h-3.5 w-3.5" /> Disconnect
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={(e) => { e.preventDefault(); if (draft.trim()) save(draft.trim()); }} className="flex gap-2">
-              <Input
-                type="password"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Enter ADMIN_TOKEN..."
-                className="flex-1"
-              />
-              <Button type="submit" size="sm" disabled={!draft.trim()}>
-                <Save className="h-3.5 w-3.5" /> Save
-              </Button>
-            </form>
-          )}
-        </div>
+        <p className="text-xs text-zinc-500">
+          Authentication is handled via Firebase. Sign in with your admin Google account.
+        </p>
       </div>
 
       {/* About */}
