@@ -225,7 +225,9 @@ export default function UsersPage() {
                           <img
                             src={u.photoURL}
                             alt=""
+                            referrerPolicy="no-referrer"
                             className="h-8 w-8 rounded-full shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                           />
                         ) : (
                           <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">

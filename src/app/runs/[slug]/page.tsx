@@ -522,8 +522,12 @@ function PreviewTab({
           {screenshotUrl && (
             <div className="space-y-2">
               <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Screenshot</h3>
-              <div className="rounded-lg border border-zinc-800/60 bg-zinc-900 p-2 flex justify-center">
-                <img src={screenshotUrl} alt="Screenshot" className="max-h-[400px] rounded object-contain" />
+              <div className="group/shot relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-zinc-800/60 bg-zinc-900">
+                <img
+                  src={screenshotUrl}
+                  alt="Screenshot"
+                  className="absolute left-0 top-0 w-full origin-top transition-transform duration-[2400ms] ease-in-out group-hover/shot:-translate-y-[60%]"
+                />
               </div>
             </div>
           )}

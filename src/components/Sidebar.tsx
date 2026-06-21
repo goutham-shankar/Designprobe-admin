@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Tag,
+  Mail,
 } from "lucide-react";
 
 const NAV = [
@@ -19,6 +20,7 @@ const NAV = [
   { href: "/runs", label: "Designs", icon: Layers },
   { href: "/categories", label: "Categories", icon: Tag },
   { href: "/queue", label: "Queue", icon: ListOrdered },
+  { href: "/emails", label: "Emails", icon: Mail },
   { href: "/users", label: "Users", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -77,12 +79,17 @@ export function Sidebar() {
         {!loading && user && (
           <div className="flex items-center gap-2.5 px-2">
             {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="h-7 w-7 rounded-full shrink-0" />
-            ) : (
-              <div className="h-7 w-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 text-xs text-zinc-400">
-                {user.displayName?.[0] ?? "?"}
-              </div>
-            )}
+              <img
+                src={user.photoURL}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-7 w-7 rounded-full shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling?.classList.remove("hidden"); }}
+              />
+            ) : null}
+            <div className={cn("h-7 w-7 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 text-xs text-zinc-400", user.photoURL && "hidden")}>
+              {user.displayName?.[0] ?? "?"}
+            </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs text-zinc-300 truncate font-medium">{user.displayName}</p>
               <p className="text-[10px] text-zinc-600 truncate">{user.email}</p>
